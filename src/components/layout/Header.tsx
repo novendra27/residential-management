@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, Menu, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
 import { authService } from '@/services/auth.service'
@@ -26,7 +26,12 @@ function getPageTitle(pathname: string): string {
   return 'Manajemen RT'
 }
 
-export function Header() {
+interface HeaderProps {
+  sidebarOpen: boolean
+  onToggleSidebar: () => void
+}
+
+export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, clearAuth } = useAuthStore()
@@ -38,10 +43,28 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-60 right-0 h-16 bg-white border-b border-border flex items-center justify-between px-6 z-20">
-      <h1 className="text-base font-semibold text-foreground">
-        {getPageTitle(location.pathname)}
-      </h1>
+    <header
+      className={`fixed top-0 right-0 h-16 bg-white border-b border-border flex items-center justify-between px-4 lg:px-6 z-20 transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'left-0 lg:left-60' : 'left-0'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        {/* Hamburger:
+            - Mobile: selalu tampil
+            - Desktop: hanya tampil saat sidebar TERTUTUP */}
+        <button
+          onClick={onToggleSidebar}
+          className={`p-1.5 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors ${
+            sidebarOpen ? 'lg:hidden' : ''
+          }`}
+          aria-label="Buka sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <h1 className="text-base font-semibold text-foreground">
+          {getPageTitle(location.pathname)}
+        </h1>
+      </div>
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
