@@ -22,4 +22,16 @@ export const houseService = {
 
   delete: (id: string) =>
     api.delete<null>(`/houses/${id}`),
+
+  // POST /houses/{id}/assign — tugaskan penghuni ke rumah kosong
+  assign: (id: string, data: { resident_id: string; move_in_date: string }) =>
+    api.post<ResidentHistory>(`/houses/${id}/assign`, data as Record<string, unknown>),
+
+  // PUT /houses/{id}/assign — perbarui hunian aktif (ganti penghuni / koreksi tanggal masuk)
+  updateAssign: (id: string, data: { resident_id?: string; move_in_date?: string }) =>
+    api.put<ResidentHistory>(`/houses/${id}/assign`, data as Record<string, unknown>),
+
+  // DELETE /houses/{id}/assign — keluarkan penghuni aktif (move-out)
+  unassign: (id: string, data?: { move_out_date?: string }) =>
+    api.delete<ResidentHistory>(`/houses/${id}/assign`, data as Record<string, unknown>),
 }

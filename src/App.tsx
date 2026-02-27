@@ -59,6 +59,7 @@ export default function App() {
               <Route path="/bills" element={<BillList />} />
               <Route path="/bills/new" element={<BillForm />} />
               <Route path="/bills/:id" element={<BillDetail />} />
+              <Route path="/bills/:id/edit" element={<BillForm />} />
 
               {/* Expenses */}
               <Route path="/expenses" element={<ExpenseList />} />

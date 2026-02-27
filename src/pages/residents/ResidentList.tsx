@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Users } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -16,6 +17,16 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
 import { residentService } from '@/services/resident.service'
 import { formatDate } from '@/lib/utils'
+import type { Resident } from '@/types'
+
+type ResidentSortKey = keyof Pick<Resident, 'full_name' | 'phone_number' | 'is_contract' | 'is_married' | 'created_at'>
+
+function SortIcon({ col, sortKey, sortDir }: { col: ResidentSortKey; sortKey: ResidentSortKey | null; sortDir: 'asc' | 'desc' }) {
+  if (sortKey !== col) return <ArrowUpDown className="ml-1 h-3 w-3 inline opacity-40" />
+  return sortDir === 'asc'
+    ? <ArrowUp className="ml-1 h-3 w-3 inline text-primary" />
+    : <ArrowDown className="ml-1 h-3 w-3 inline text-primary" />
+}
 
 // Avatar inisial dari nama
 function AvatarInitial({ name }: { name: string }) {
@@ -44,6 +55,9 @@ function AvatarInitial({ name }: { name: string }) {
 export default function ResidentList() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState<ResidentSortKey | null>(null)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['residents', page],
@@ -54,8 +68,33 @@ export default function ResidentList() {
     },
   })
 
-  const residents = data?.data ?? []
+  const residents = useMemo(() => data?.data ?? [], [data?.data])
   const meta = data?.meta
+
+  const handleSort = (key: ResidentSortKey) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setSortDir('asc') }
+  }
+
+  const processed = useMemo(() => {
+    const q = search.toLowerCase()
+    const list = q
+      ? residents.filter(r =>
+          r.full_name.toLowerCase().includes(q) ||
+          (r.phone_number ?? '').toLowerCase().includes(q)
+        )
+      : [...residents]
+    if (sortKey) {
+      list.sort((a, b) => {
+        const av = a[sortKey], bv = b[sortKey]
+        const cmp = typeof av === 'boolean'
+          ? (av === bv ? 0 : av ? -1 : 1)
+          : String(av ?? '').localeCompare(String(bv ?? ''), 'id')
+        return sortDir === 'asc' ? cmp : -cmp
+      })
+    }
+    return list
+  }, [residents, search, sortKey, sortDir])
 
   return (
     <div className="space-y-5">
@@ -71,6 +110,17 @@ export default function ResidentList() {
           <Plus className="h-4 w-4" />
           Tambah Penghuni
         </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Cari nama atau no. HP..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9 h-9 bg-white"
+        />
       </div>
 
       {/* Content */}
@@ -98,16 +148,28 @@ export default function ResidentList() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/60">
-                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-5">Penghuni</TableHead>
-                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">No. HP</TableHead>
-                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status Hunian</TableHead>
-                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status Kawin</TableHead>
-                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Terdaftar</TableHead>
+                  {(['full_name', 'phone_number', 'is_contract', 'is_married', 'created_at'] as ResidentSortKey[]).map((key, i) => {
+                    const labels: Record<ResidentSortKey, string> = {
+                      full_name: 'Penghuni', phone_number: 'No. HP',
+                      is_contract: 'Status Hunian', is_married: 'Status Kawin', created_at: 'Terdaftar',
+                    }
+                    return (
+                      <TableHead
+                        key={key}
+                        className={`text-xs font-semibold uppercase tracking-wide text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors${i === 0 ? ' pl-5' : ''}`}
+                        onClick={() => handleSort(key)}
+                      >
+                        {labels[key]}<SortIcon col={key} sortKey={sortKey} sortDir={sortDir} />
+                      </TableHead>
+                    )
+                  })}
                   <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {residents.map((resident) => (
+                {processed.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground text-sm">Tidak ada data yang cocok dengan pencarian.</TableCell></TableRow>
+                ) : processed.map((resident) => (
                   <TableRow
                     key={resident.id}
                     className="cursor-pointer hover:bg-blue-50/50 transition-colors border-b border-border/40 last:border-0"
