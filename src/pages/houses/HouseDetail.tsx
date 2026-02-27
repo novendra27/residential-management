@@ -124,7 +124,7 @@ export default function HouseDetail() {
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-50 text-slate-600 ring-1 ring-slate-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                Kosong
+                Tidak Dihuni
               </span>
             )}
           </div>

@@ -243,7 +243,7 @@ export default function HouseForm() {
                 <SelectValue placeholder="Pilih penghuni" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Kosong</SelectItem>
+                <SelectItem value="0">Tidak Dihuni</SelectItem>
                 {residents.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
                     {r.full_name}
@@ -253,7 +253,7 @@ export default function HouseForm() {
             </Select>
             {isEdit && originalOccupantId !== '0' && selectedOccupant === originalOccupantId && (
               <p className="text-xs text-muted-foreground">
-                Penghuni aktif saat ini. Pilih penghuni lain untuk mengganti, atau pilih &ldquo;Kosong&rdquo; untuk move-out.
+                Penghuni aktif saat ini. Pilih penghuni lain untuk mengganti, atau pilih &ldquo;Tidak Dihuni&rdquo; untuk move-out.
               </p>
             )}
           </div>
